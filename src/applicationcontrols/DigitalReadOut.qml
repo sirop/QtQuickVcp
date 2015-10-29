@@ -38,10 +38,10 @@ ApplicationItem {
     property var g5xNames: ["G54", "G55", "G56", "G57", "G58", "G59", "G59.1", "G59.2", "G59.3"]
     property int g5xIndex: _ready ? status.motion.g5xIndex : 1
     property var position: getPosition()
-    property var dtg: _ready ? status.motion.dtg : {"x":0.0, "y":0.0, "z":0.0, "a":0.0}
-    property var g5xOffset: _ready ? status.motion.g5xOffset : {"x":0.0, "y":0.0, "z":0.0, "a":0.0}
-    property var g92Offset: _ready ? status.motion.g92Offset : {"x":0.0, "y":0.0, "z":0.0, "a":0.0}
-    property var toolOffset: _ready ? status.io.toolOffset : {"x":0.0, "y":0.0, "z":0.0, "a":0.0}
+    property var dtg: _ready ? status.motion.dtg : {"0":0.0, "1":0.0, "2":0.0, "3":0.0}
+    property var g5xOffset: _ready ? status.motion.g5xOffset : {"0":0.0, "1":0.0, "2":0.0, "3":0.0}
+    property var g92Offset: _ready ? status.motion.g92Offset : {"0":0.0, "1":0.0, "2":0.0, "3":0.0}
+    property var toolOffset: _ready ? status.io.toolOffset : {"0":0.0, "1":0.0, "2":0.0, "3":0.0}
     property double velocity: _ready ? status.motion.currentVel * _timeFactor : 0.0
     property double distanceToGo: _ready ? status.motion.distanceToGo : 0.0
     property bool offsetsVisible: settings.initialized && settings.values.dro.showOffsets
@@ -51,7 +51,6 @@ ApplicationItem {
     property int positionOffset: _ready ? status.config.positionOffset : ApplicationStatus.RelativePositionOffset
 
     property bool _ready: status.synced
-    property var _axisNames: ["x", "y", "z", "a", "b", "c", "u", "v", "w"]
     property double _timeFactor: (_ready && (status.config.timeUnits === ApplicationStatus.TimeUnitsMinute)) ? 60 : 1
 
     function getPosition() {
@@ -60,13 +59,12 @@ ApplicationItem {
             basePosition = (positionFeedback == ApplicationStatus.ActualPositionFeedback) ? status.motion.actualPosition : status.motion.position
         }
         else {
-            basePosition = {"x":0.0, "y":0.0, "z":0.0, "a":0.0}
+            basePosition = {"0":0.0, "1":0.0, "2":0.0, "3":0.0}
         }
 
         if (positionOffset == ApplicationStatus.RelativePositionOffset) {
             for (var i = 0; i < axes; ++i) {
-                var axisName = _axisNames[i]
-                basePosition[axisName] -= g5xOffset[axisName] + g92Offset[axisName] + toolOffset[axisName]
+                basePosition[i] -= g5xOffset[i] + g92Offset[i] + toolOffset[i]
             }
         }
 
@@ -221,7 +219,7 @@ ApplicationItem {
                 onLoaded: {
                     item.title = Qt.binding(function(){return droRect.axisNames[index]})
                     item.type = ""
-                    item.value = Qt.binding(function(){return droRect.position[droRect._axisNames[index]]})
+                    item.value = Qt.binding(function(){return droRect.position[index]})
                     item.homed = Qt.binding(function(){return ((index < droRect.axisHomed.length) && droRect.axisHomed[index].homed)})
                 }
             }
@@ -278,7 +276,7 @@ ApplicationItem {
                 onLoaded: {
                     item.title = Qt.binding(function(){return droRect.axisNames[index]})
                     item.type = "DTG"
-                    item.value = Qt.binding(function(){return droRect.dtg[droRect._axisNames[index]]})
+                    item.value = Qt.binding(function(){return droRect.dtg[index]})
                 }
             }
         }
@@ -300,7 +298,7 @@ ApplicationItem {
                 onLoaded: {
                     item.title = Qt.binding(function(){return droRect.axisNames[index]})
                     item.type = Qt.binding(function(){return droRect.g5xNames[droRect.g5xIndex-1]})
-                    item.value = Qt.binding(function(){return droRect.g5xOffset[droRect._axisNames[index]]})
+                    item.value = Qt.binding(function(){return droRect.g5xOffset[index]})
                 }
             }
         }
@@ -322,7 +320,7 @@ ApplicationItem {
                 onLoaded: {
                     item.title = Qt.binding(function(){return droRect.axisNames[index]})
                     item.type = "G92"
-                    item.value = Qt.binding(function(){return droRect.g92Offset[droRect._axisNames[index]]})
+                    item.value = Qt.binding(function(){return droRect.g92Offset[index]})
                 }
             }
         }
@@ -344,7 +342,7 @@ ApplicationItem {
                 onLoaded: {
                     item.title = Qt.binding(function(){return droRect.axisNames[index]})
                     item.type = "TLO"
-                    item.value = Qt.binding(function(){return droRect.toolOffset[droRect._axisNames[index]]})
+                    item.value = Qt.binding(function(){return droRect.toolOffset[index]})
                 }
             }
         }
