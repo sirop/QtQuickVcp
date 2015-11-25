@@ -82,7 +82,6 @@ public slots:
     void clearTopics();
 
 private:
-
     QString m_uri;
     QString m_debugName;
     QSet<QString> m_topics;  // the topics we are interested in
@@ -95,11 +94,10 @@ private:
     QString     m_errorString;
     int         m_heartbeatPeriod;
     QTimer     *m_heartbeatTimer;
-    pb::Container   m_rx;  // more efficient to reuse a protobuf Message
+    pb::Container m_rx;  // more efficient to reuse a protobuf Message
 
     void start();
     void stop();
-    void cleanup();
     void refreshHeartbeat();
     void stopHeartbeat();
     void updateState(SocketState state);
@@ -116,10 +114,9 @@ private slots:
     void unsubscribe();
 
 signals:
-
+    void messageReceived(QByteArray topic, pb::Container *rx);
     void uriChanged(QString uri);
     void debugNameChanged(QString debugName);
-    void messageReceived(QByteArray topic, pb::Container *rx);
     void socketStateChanged(SocketState socketState);
     void errorStringChanged(QString errorString);
 };

@@ -19,7 +19,7 @@ MachinetalkSubscriber::MachinetalkSubscriber(QObject *parent) :
 
 MachinetalkSubscriber::~MachinetalkSubscriber()
 {
-    cleanup();
+    stop();
 }
 
 /** Add a topic that should be subscribed **/
@@ -130,11 +130,6 @@ void MachinetalkSubscriber::stop()
     DEBUG_TAG(1, m_debugName, "stop");
 #endif
 
-    cleanup();
-}
-
-void MachinetalkSubscriber::cleanup()
-{
     stopHeartbeat();
     disconnectSockets();
 }
