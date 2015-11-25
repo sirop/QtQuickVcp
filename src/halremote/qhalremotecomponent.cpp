@@ -613,8 +613,8 @@ void QHalRemoteComponent::halrcompMessageReceived(QList<QByteArray> messageList)
 {
     QByteArray topic;
 
-    topic = messageList.at(0);
-    m_rx.ParseFromArray(messageList.at(1).data(), messageList.at(1).size());
+    topic = messageList.at(0);  // TODO: we never check the topic
+    m_rx.ParseFromArray(messageList.at(1).data(), messageList.at(1).size()); // TODO: only first 2 messages handled
 
 #ifdef QT_DEBUG
     std::string s;
@@ -643,9 +643,9 @@ void QHalRemoteComponent::halrcompMessageReceived(QList<QByteArray> messageList)
 #ifdef QT_DEBUG
         DEBUG_TAG(1, m_name, "full update")
 #endif
-        for (int i = 0; i < m_rx.comp_size(); ++i)
+        for (int i = 0; i < m_rx.comp_size(); ++i)  // TODO: we can only handle one component
         {
-            pb::Component component = m_rx.comp(i);
+            pb::Component component = m_rx.comp(i);  // shouldnt we check the name?
             for (int j = 0; j < component.pin_size(); j++)
             {
                 pb::Pin remotePin = component.pin(j);
