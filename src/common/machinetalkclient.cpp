@@ -61,7 +61,7 @@ bool MachinetalkClient::connectSockets()
 /** Disconnects the 0MQ sockets */
 void MachinetalkClient::disconnectSockets()
 {
-    m_socketState = Down;
+    updateState(Down);
 
     if (m_socket != NULL)
     {
@@ -100,7 +100,6 @@ void MachinetalkClient::stop()
     DEBUG_TAG(1, m_debugName, "stop");
 #endif
 
-    updateState(Down);
     stopHeartbeat();
     disconnectSockets();
 }
