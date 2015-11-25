@@ -72,7 +72,7 @@ GLView3D {
     property vector3d cameraOffset: Qt.vector3d(0, 0, 0)
     property real cameraHeading: -135
     property real cameraPitch: 60
-    property real sizeFactor: _ready ? status.config.linearUnits: 1
+    property real sizeFactor: 1.0 //_ready ? status.config.linearUnits: 1
 
     property bool programVisible: object.settings.initialized && object.settings.values.preview.showProgram
     property bool gridVisible: true
@@ -287,8 +287,8 @@ GLView3D {
         position.z: (_ready ? status.motion.position.z - status.io.toolOffset.z : 0) + height
 
         cone: true
-        radius: 5 * pathView.sizeFactor
-        height: 15 * pathView.sizeFactor
+        radius: 5 * pathView.sizeFactor / cameraZoom
+        height: 15 * pathView.sizeFactor / cameraZoom
         color: pathView.colors["tool_diffuse"]
         rotationAngle: 180
         rotationAxis: Qt.vector3d(1,0,0)
@@ -348,11 +348,12 @@ GLView3D {
         minimum: path.minimumExtents
         limitMinimum: boundingBox.minimum.minus(position)
         limitMaximum: boundingBox.maximum.minus(position)
-        textSize: 8 * pathView.sizeFactor
-        decimals: 2
+        textSize: 7 * pathView.sizeFactor / cameraZoom
+        decimals: status.synced ? ((status.config.programUnits === ApplicationStatus.CanonUnitsInches) ? 3 : 2) : 2
         color: pathView.colors["label_ok"]
         limitColor: pathView.colors["label_limit"]
         viewMode: pathView.viewMode
+        units: status.synced ? status.config.programUnits : ApplicationStatus.CanonUnitsMm
     }
 
     Coordinate3D {
@@ -364,8 +365,8 @@ GLView3D {
         visible: pathView.coordinateVisible
         axes: pathView.axes
         position: getPosition()
-        textSize: 14 * pathView.sizeFactor
-        axesLength: 25 * pathView.sizeFactor
+        textSize: 10 * pathView.sizeFactor / cameraZoom
+        axesLength: 20 * pathView.sizeFactor / cameraZoom
         xAxisColor: pathView.colors["axis_x"]
         yAxisColor: pathView.colors["axis_y"]
         zAxisColor: pathView.colors["axis_z"]
@@ -393,7 +394,7 @@ GLView3D {
 
     ProgramOffsets3D {
         id: programOffsets
-        textSize: 14 * sizeFactor
+        textSize: 14 * sizeFactor / cameraZoom
         color: pathView.colors["small_origin"]
         g5xIndex: status.synced ? status.motion.g5xIndex : 1
         g5xOffset: status.synced ? status.motion.g5xOffset : {"x":0.12345, "y":0.234,"z":123.12,"a":324.3}
@@ -404,7 +405,7 @@ GLView3D {
     Sphere3D {
         id: smallOrigin
         visible: pathView.offsetsVisible
-        radius: 2 * sizeFactor
+        radius: 2 * sizeFactor / cameraZoom
         position: Qt.vector3d(0.0, 0.0, 0.0)
         color: pathView.colors["small_origin"]
     }

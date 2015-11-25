@@ -22,6 +22,7 @@
 
 import QtQuick 2.0
 import Machinekit.PathView 1.0
+import Machinekit.Application 1.0
 
 Canvas3D {
     property int axes: 3
@@ -39,6 +40,9 @@ Canvas3D {
     property string suffix: ""
     property int decimals: 2
     property string viewMode: "Perspective"
+    property int units: ApplicationStatus.CanonUnitsMm
+
+    property real _unitScale: (units == ApplicationStatus.CanonUnitsMm) ? 1.0 : (1 / 25.4)
 
     id: root
     onPaint: {
@@ -111,7 +115,7 @@ Canvas3D {
 
                     context.translate(root.size.x/2.0, -textOffset - root.textSize, 0.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
-                    context.text(root.prefix + root.size.x.toFixed(root.decimals) + root.suffix, GLView3D.AlignCenter)
+                    context.text(root.prefix + (root.size.x * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignCenter)
 
                     if (root.limitMaximum.x < root.maximum.x) {
                         context.color(root.limitColor)
@@ -119,7 +123,7 @@ Canvas3D {
                     context.translate(root.size.x + root.textSize/2.0, -textOffset - lineEnding/2.0, 0.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
                     context.rotate(90, 0.0, 0.0, 1.0)
-                    context.text(root.prefix + (root.minimum.x + root.size.x).toFixed(root.decimals) + root.suffix, GLView3D.AlignRight)
+                    context.text(root.prefix + ((root.minimum.x + root.size.x) * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignRight)
 
                     if (root.limitMinimum.x > root.minimum.x) {
                         context.color(root.limitColor)
@@ -127,7 +131,7 @@ Canvas3D {
                     context.translate(root.textSize/2.0, -textOffset - lineEnding/2.0, 0.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
                     context.rotate(90, 0.0, 0.0, 1.0)
-                    context.text(root.prefix + root.minimum.x.toFixed(root.decimals) + root.suffix, GLView3D.AlignRight)
+                    context.text(root.prefix + (root.minimum.x * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignRight)
                 context.endUnion()
             }
 
@@ -146,7 +150,7 @@ Canvas3D {
                     context.translate(root.size.y/2.0, textOffset + root.textSize, 0.0)
                     context.rotate(180, 0.0, 0.0, 1.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
-                    context.text(root.prefix + root.size.y.toFixed(root.decimals) + root.suffix, GLView3D.AlignCenter)
+                    context.text(root.prefix + (root.size.y * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignCenter)
 
                     if (root.limitMaximum.y < root.maximum.y) {
                         context.color(root.limitColor)
@@ -154,7 +158,7 @@ Canvas3D {
                     context.translate(root.size.y - root.textSize/2.0, textOffset + lineEnding/2.0, 0.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
                     context.rotate(-90, 0.0, 0.0, 1.0)
-                    context.text(root.prefix + (root.minimum.y + root.size.y).toFixed(root.decimals) + root.suffix, GLView3D.AlignRight)
+                    context.text(root.prefix + ((root.minimum.y + root.size.y) * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignRight)
 
                     if (root.limitMinimum.y > root.minimum.y) {
                         context.color(root.limitColor)
@@ -162,7 +166,7 @@ Canvas3D {
                     context.translate(-root.textSize/2.0, textOffset + lineEnding/2.0, 0.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
                     context.rotate(-90, 0.0, 0.0, 1.0)
-                    context.text(root.prefix + root.minimum.y.toFixed(root.decimals) + root.suffix, GLView3D.AlignRight)
+                    context.text(root.prefix + (root.minimum.y * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignRight)
                 context.endUnion()
             }
 
@@ -182,7 +186,7 @@ Canvas3D {
 
                     context.translate(root.size.z/2.0, -textOffset - root.textSize, 0.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
-                    context.text(root.prefix + root.size.z.toFixed(root.decimals) + root.suffix, GLView3D.AlignCenter)
+                    context.text(root.prefix + (root.size.z * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignCenter)
 
                     if (root.limitMaximum.z < root.maximum.z) {
                         context.color(root.limitColor)
@@ -190,7 +194,7 @@ Canvas3D {
                     context.translate(root.size.z - root.textSize/2.0, -textOffset - lineEnding/2.0, 0.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
                     context.rotate(-90, 0.0, 0.0, 1.0)
-                    context.text(root.prefix + (root.minimum.z + root.size.z).toFixed(root.decimals) + root.suffix, GLView3D.AlignLeft)
+                    context.text(root.prefix + ((root.minimum.z + root.size.z) * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignLeft)
 
                     if (root.limitMinimum.z > root.minimum.z) {
                         context.color(root.limitColor)
@@ -198,7 +202,7 @@ Canvas3D {
                     context.translate(-root.textSize/2.0, -textOffset - lineEnding/2.0, 0.0)
                     context.scale(root.textSize, root.textSize, root.textSize)
                     context.rotate(-90, 0.0, 0.0, 1.0)
-                    context.text(root.prefix + root.minimum.z.toFixed(root.decimals) + root.suffix, GLView3D.AlignLeft)
+                    context.text(root.prefix + (root.minimum.z * root._unitScale).toFixed(root.decimals) + root.suffix, GLView3D.AlignLeft)
                 context.endUnion()
             }
 
@@ -216,5 +220,6 @@ Canvas3D {
         onSuffixChanged.connect(needsUpdate)
         onDecimalsChanged.connect(needsUpdate)
         onViewModeChanged.connect(needsUpdate)
+        onUnitsChanged.connect(needsUpdate)
     }
 }
