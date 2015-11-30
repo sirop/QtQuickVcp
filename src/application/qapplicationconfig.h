@@ -109,7 +109,7 @@ private:
     QList<QApplicationConfigItem*> m_configs;
     QApplicationConfigFilter *m_filter;
 
-    PollingZMQContext *m_context;
+    SocketNotifierZMQContext *m_context;
     ZMQSocket *m_configSocket;
     // more efficient to reuse a protobuf Message
     pb::Container m_rx;
@@ -126,7 +126,7 @@ private slots:
     bool connectSocket();
     void disconnectSocket();
     void configMessageReceived(QList<QByteArray> messageList);
-    void pollError(int errorNum, const QString &errorMsg);
+    void socketError(int errorNum, const QString &errorMsg);
     void request(pb::ContainerType type);
 
 signals:

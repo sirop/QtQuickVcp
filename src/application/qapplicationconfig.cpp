@@ -352,7 +352,7 @@ void QApplicationConfig::updateError(QApplicationConfig::ConnectionError error, 
     }
 }
 
-void QApplicationConfig::pollError(int errorNum, const QString &errorMsg)
+void QApplicationConfig::socketError(int errorNum, const QString &errorMsg)
 {
     QString errorString;
     errorString = QString("Error %1: ").arg(errorNum) + errorMsg;
@@ -362,9 +362,9 @@ void QApplicationConfig::pollError(int errorNum, const QString &errorMsg)
 
 bool QApplicationConfig::connectSocket()
 {
-    m_context = new PollingZMQContext(this, 1);
-    connect(m_context, SIGNAL(pollError(int,QString)),
-            this, SLOT(pollError(int,QString)));
+    m_context = new SocketNotifierZMQContext(this, 1);
+    connect(m_context, SIGNAL(notifierError(int,QString)),
+            this, SLOT(socketError(int,QString)));
     m_context->start();
 
     m_configSocket = m_context->createSocket(ZMQSocket::TYP_DEALER, this);

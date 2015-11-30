@@ -152,7 +152,7 @@ private:
     QJsonValue m_launchers;
     bool m_synced;
 
-    PollingZMQContext *m_context;
+    SocketNotifierZMQContext *m_context;
     ZMQSocket  *m_subscribeSocket;
     ZMQSocket  *m_commandSocket;
     QTimer     *m_commandHeartbeatTimer;
@@ -181,7 +181,7 @@ private:
 private slots:
     void subscribeMessageReceived(QList<QByteArray> messageList);
     void commandMessageReceived(QList<QByteArray> messageList);
-    void pollError(int errorNum, const QString& errorMsg);
+    void socketError(int errorNum, const QString& errorMsg);
     void commandHeartbeatTimerTick();
     void subscribeHeartbeatTimerTick();
 

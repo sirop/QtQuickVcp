@@ -757,7 +757,7 @@ void QApplicationCommand::commandMessageReceived(const QList<QByteArray> &messag
     }
 }
 
-void QApplicationCommand::pollError(int errorNum, const QString &errorMsg)
+void QApplicationCommand::socketError(int errorNum, const QString &errorMsg)
 {
     QString errorString;
     errorString = QString("Error %1: ").arg(errorNum) + errorMsg;
@@ -788,9 +788,9 @@ void QApplicationCommand::commandHeartbeatTimerTick()
 /** Connects the 0MQ sockets */
 bool QApplicationCommand::connectSockets()
 {
-    m_context = new PollingZMQContext(this, 1);
-    connect(m_context, SIGNAL(pollError(int,QString)),
-            this, SLOT(pollError(int,QString)));
+    m_context = new SocketNotifierZMQContext(this, 1);
+    connect(m_context, SIGNAL(notifierError(int,QString)),
+            this, SLOT(socketError(int,QString)));
     m_context->start();
 
     m_commandSocket = m_context->createSocket(ZMQSocket::TYP_DEALER, this);

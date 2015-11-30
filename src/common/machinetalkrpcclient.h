@@ -116,7 +116,7 @@ private:
     QString m_uri;
     QString m_debugName;
 
-    PollingZMQContext *m_context;
+    SocketNotifierZMQContext *m_context;
     ZMQSocket  *m_socket;
     SocketState m_socketState;
     QString     m_errorString;
@@ -138,7 +138,7 @@ private:
 private slots:
     void heartbeatTimerTick();
     void socketMessageReceived(QList<QByteArray> messageList);
-    void pollError(int errorNum, const QString& errorMsg);
+    void socketError(int errorNum, const QString& errorMsg);
 
     bool connectSockets();
     void disconnectSockets();

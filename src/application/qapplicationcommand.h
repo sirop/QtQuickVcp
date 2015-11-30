@@ -211,7 +211,7 @@ private:
     ConnectionError m_error;
     QString         m_errorString;
 
-    PollingZMQContext *m_context;
+    SocketNotifierZMQContext *m_context;
     ZMQSocket   *m_commandSocket;
     QTimer      *m_commandHeartbeatTimer;
     int         m_commandPingErrorCount;
@@ -233,7 +233,7 @@ private:
 
 private slots:
     void commandMessageReceived(const QList<QByteArray> &messageList);
-    void pollError(int errorNum, const QString &errorMsg);
+    void socketError(int errorNum, const QString &errorMsg);
     void commandHeartbeatTimerTick();
 
     bool connectSockets();

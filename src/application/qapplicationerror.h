@@ -148,7 +148,7 @@ private:
     QString         m_errorString;
     ErrorChannels   m_channels;
 
-    PollingZMQContext *m_context;
+    SocketNotifierZMQContext *m_context;
     ZMQSocket   *m_errorSocket;
     QStringList  m_subscriptions;
     QTimer      *m_errorHeartbeatTimer;
@@ -167,7 +167,7 @@ private:
 
 private slots:
     void errorMessageReceived(const QList<QByteArray> &messageList);
-    void pollError(int errorNum, const QString &errorMsg);
+    void socketError(int errorNum, const QString &errorMsg);
     void errorHeartbeatTimerTick();
 
     bool connectSockets();

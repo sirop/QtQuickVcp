@@ -308,7 +308,7 @@ private:
     StatusChannels  m_syncedChannels;
     StatusChannels  m_channels;
 
-    PollingZMQContext *m_context;
+    SocketNotifierZMQContext *m_context;
     ZMQSocket   *m_statusSocket;
     QStringList  m_subscriptions;
     QTimer      *m_statusHeartbeatTimer;
@@ -335,7 +335,7 @@ private:
 
 private slots:
     void statusMessageReceived(const QList<QByteArray> &messageList);
-    void pollError(int errorNum, const QString &errorMsg);
+    void socketError(int errorNum, const QString &errorMsg);
     void statusHeartbeatTimerTick();
 
     bool connectSockets();

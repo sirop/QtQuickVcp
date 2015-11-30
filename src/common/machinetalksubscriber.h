@@ -124,6 +124,7 @@ private:
 
 private slots:
     void heartbeatTimerTick();
+    void socketError(int errorNum, const QString &errorMsg);
     void socketMessageReceived(QList<QByteArray> messageList);
 
     bool connectSockets();

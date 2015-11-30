@@ -280,7 +280,7 @@ void QPreviewClient::previewMessageReceived(QList<QByteArray> messageList)
     }
 }
 
-void QPreviewClient::pollError(int errorNum, const QString &errorMsg)
+void QPreviewClient::socketError(int errorNum, const QString &errorMsg)
 {
     QString errorString;
     errorString = QString("Error %1: ").arg(errorNum) + errorMsg;
@@ -290,9 +290,9 @@ void QPreviewClient::pollError(int errorNum, const QString &errorMsg)
 /** Connects the 0MQ sockets */
 bool QPreviewClient::connectSockets()
 {
-    m_context = new PollingZMQContext(this, 1);
-    connect(m_context, SIGNAL(pollError(int,QString)),
-            this, SLOT(pollError(int,QString)));
+    m_context = new SocketNotifierZMQContext(this, 1);
+    connect(m_context, SIGNAL(notifierError(int,QString)),
+            this, SLOT(socketError(int,QString)));
     m_context->start();
 
     m_statusSocket = m_context->createSocket(ZMQSocket::TYP_SUB, this);

@@ -182,7 +182,7 @@ private:
     CanonUnits          m_units;
     double              m_convertFactor;
 
-    PollingZMQContext *m_context;
+    SocketNotifierZMQContext *m_context;
     ZMQSocket  *m_statusSocket;
     ZMQSocket  *m_previewSocket;
     // more efficient to reuse a protobuf Message
@@ -204,7 +204,7 @@ private:
 private slots:
     void statusMessageReceived(QList<QByteArray> messageList);
     void previewMessageReceived(QList<QByteArray> messageList);
-    void pollError(int errorNum, const QString& errorMsg);
+    void socketError(int errorNum, const QString& errorMsg);
 
     bool connectSockets();
     void disconnectSockets();

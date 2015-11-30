@@ -45,6 +45,8 @@ void MachinetalkSubscriber::clearTopics()
 bool MachinetalkSubscriber::connectSockets()
 {
     m_context = new SocketNotifierZMQContext(this, 1);
+    connect(m_context, SIGNAL(notifierError(int,QString)),
+            this, SLOT(socketError(int,QString)));
     m_context->start();
 
     m_socket = m_context->createSocket(ZMQSocket::TYP_SUB, this);
@@ -234,4 +236,11 @@ void MachinetalkSubscriber::socketMessageReceived(QList<QByteArray> messageList)
         unsubscribe();  // clean up previous subscription
         subscribe();  // trigger a fresh subscribe -> full update
     }
+}
+
+void MachinetalkSubscriber::socketError(int errorNum, const QString &errorMsg)
+{
+    QString errorString;
+    errorString = QString("Error %1: ").arg(errorNum) + errorMsg;
+    updateState(SocketError, errorString);
 }
