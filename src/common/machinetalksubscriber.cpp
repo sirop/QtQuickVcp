@@ -4,11 +4,12 @@
 /** A generic Machinetalk subscriber socket **/
 MachinetalkSubscriber::MachinetalkSubscriber(QObject *parent) :
     QObject(parent),
+    m_ready(false),
     m_uri(""),
     m_debugName(""),
     m_context(NULL),
     m_socket(NULL),
-    m_socketState(Down),
+    m_socketState(SocketDown),
     m_errorString(""),
     m_heartbeatPeriod(3000),
     m_heartbeatTimer(new QTimer(this))
@@ -43,9 +44,7 @@ void MachinetalkSubscriber::clearTopics()
 /** Connects the 0MQ sockets */
 bool MachinetalkSubscriber::connectSockets()
 {
-    m_context = new PollingZMQContext(this, 1);
-    connect(m_context, SIGNAL(pollError(int,QString)),
-            this, SLOT(pollError(int,QString)));
+    m_context = new SocketNotifierZMQContext(this, 1);
     m_context->start();
 
     m_socket = m_context->createSocket(ZMQSocket::TYP_SUB, this);
@@ -57,7 +56,7 @@ bool MachinetalkSubscriber::connectSockets()
     catch (const zmq::error_t &e) {
         QString errorString;
         errorString = QString("Error %1: ").arg(e.num()) + QString(e.what());
-        updateState(Error, errorString);
+        updateState(SocketError, errorString);
         return false;
     }
 
@@ -74,7 +73,7 @@ bool MachinetalkSubscriber::connectSockets()
 /** Disconnects the 0MQ sockets */
 void MachinetalkSubscriber::disconnectSockets()
 {
-    updateState(Down);
+    updateState(SocketDown);
 
     if (m_socket != NULL)
     {
@@ -93,7 +92,7 @@ void MachinetalkSubscriber::disconnectSockets()
 
 void MachinetalkSubscriber::subscribe()
 {
-    updateState(Trying);
+    updateState(SocketTrying);
     m_heartbeatPeriod = 0;  // reset heartbeat
     foreach(QString topic, m_topics)
     {
@@ -104,7 +103,7 @@ void MachinetalkSubscriber::subscribe()
 
 void MachinetalkSubscriber::unsubscribe()
 {
-    updateState(Down);
+    updateState(SocketDown);
     foreach(QString topic, m_subscriptions)
     {
         m_socket->subscribeTo(topic.toLocal8Bit());
@@ -153,12 +152,12 @@ void MachinetalkSubscriber::stopHeartbeat()
     m_heartbeatTimer->stop();
 }
 
-void MachinetalkSubscriber::updateState(MachinetalkSubscriber::SocketState state)
+void MachinetalkSubscriber::updateState(SocketState state)
 {
     updateState(state, "");
 }
 
-void MachinetalkSubscriber::updateState(MachinetalkSubscriber::SocketState state, QString errorString)
+void MachinetalkSubscriber::updateState(SocketState state, QString errorString)
 {
     if (state != m_socketState) {
         m_socketState = state;
@@ -172,11 +171,11 @@ void MachinetalkSubscriber::updateState(MachinetalkSubscriber::SocketState state
 
 #ifdef QT_DEBUG
     QMap<SocketState, QString> states;
-    states.insert(Down, "DOWN");
-    states.insert(Trying, "TRYING");
-    states.insert(Up, "UP");
-    states.insert(Timeout, "TIMEOUT");
-    states.insert(Error, "ERROR");
+    states.insert(SocketDown, "DOWN");
+    states.insert(SocketTrying, "TRYING");
+    states.insert(SocketUp, "UP");
+    states.insert(SocketTimeout, "TIMEOUT");
+    states.insert(SocketError, "ERROR");
     DEBUG_TAG(1, m_debugName, states.value(m_socketState));
 #endif
     }
@@ -184,7 +183,7 @@ void MachinetalkSubscriber::updateState(MachinetalkSubscriber::SocketState state
 
 void MachinetalkSubscriber::heartbeatTimerTick()
 {
-    updateState(Timeout);
+    updateState(SocketTimeout);
     m_heartbeatTimer->stop();  // not needed anymore
 
 #ifdef QT_DEBUG
@@ -213,7 +212,7 @@ void MachinetalkSubscriber::socketMessageReceived(QList<QByteArray> messageList)
 
     if (m_rx.type() == pb::MT_HALRCOMP_FULL_UPDATE)
     {
-        updateState(Up);
+        updateState(SocketUp);
 
         if (m_rx.has_pparams())
         {
@@ -222,7 +221,7 @@ void MachinetalkSubscriber::socketMessageReceived(QList<QByteArray> messageList)
         }
     }
 
-    if (m_socketState == Up)
+    if (m_socketState == SocketUp)
     {
         refreshHeartbeat();  // refresh heartbeat if any message is received
         if (m_rx.type() != pb::MT_PING)  // pings are uninteresting
@@ -235,11 +234,4 @@ void MachinetalkSubscriber::socketMessageReceived(QList<QByteArray> messageList)
         unsubscribe();  // clean up previous subscription
         subscribe();  // trigger a fresh subscribe -> full update
     }
-}
-
-void MachinetalkSubscriber::pollError(int errorNum, const QString &errorMsg)
-{
-    QString errorString;
-    errorString = QString("Error %1: ").arg(errorNum) + errorMsg;
-    updateState(Error, errorString);
 }

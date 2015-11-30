@@ -6,7 +6,7 @@
 #include <nzmqt/nzmqt.hpp>
 #include <machinetalk/protobuf/message.pb.h>
 #include <google/protobuf/text_format.h>
-
+#include "machinetalk.h"
 
 #if defined(Q_OS_IOS)
 namespace gpb = google_public::protobuf;
@@ -19,6 +19,7 @@ using namespace nzmqt;
 class MachinetalkSubscriber : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(bool ready READ ready WRITE setReady NOTIFY readyChanged)
     Q_PROPERTY(QString uri READ uri WRITE setUri NOTIFY uriChanged)
     Q_PROPERTY(QString debugName READ debugName WRITE setDebugName NOTIFY debugNameChanged)
     Q_PROPERTY(SocketState socketState READ socketState NOTIFY socketStateChanged)
@@ -28,14 +29,6 @@ class MachinetalkSubscriber : public QObject
 public:
     explicit MachinetalkSubscriber(QObject *parent = 0);
     ~MachinetalkSubscriber();
-
-    enum SocketState {
-        Down = 1,
-        Trying = 2,
-        Up = 3,
-        Timeout = 4,
-        Error = 5
-    };
 
     QString uri() const
     {
@@ -55,6 +48,11 @@ public:
     QString errorString() const
     {
         return m_errorString;
+    }
+
+    bool ready() const
+    {
+        return m_ready;
     }
 
 public slots:
@@ -77,18 +75,39 @@ public slots:
         emit debugNameChanged(debugName);
     }
 
+    void setReady(bool ready)
+    {
+        if (m_ready == ready)
+            return;
+
+        m_ready = ready;
+        emit readyChanged(ready);
+
+        if (m_ready)
+        {
+            start();
+        }
+        else
+        {
+            stop();
+        }
+    }
+
     void addTopic(const QString &name);
     void removeTopic(const QString &name);
     void clearTopics();
 
+
+
 private:
+    bool m_ready;
     QString m_uri;
     QString m_debugName;
     QSet<QString> m_topics;  // the topics we are interested in
     QSet<QString> m_subscriptions;  // subscribed topics
     QSet<QString> m_publishers;  // connected publishers
 
-    PollingZMQContext *m_context;
+    SocketNotifierZMQContext *m_context;
     ZMQSocket  *m_socket;
     SocketState m_socketState;
     QString     m_errorString;
@@ -106,7 +125,6 @@ private:
 private slots:
     void heartbeatTimerTick();
     void socketMessageReceived(QList<QByteArray> messageList);
-    void pollError(int errorNum, const QString& errorMsg);
 
     bool connectSockets();
     void disconnectSockets();
@@ -119,6 +137,7 @@ signals:
     void debugNameChanged(QString debugName);
     void socketStateChanged(SocketState socketState);
     void errorStringChanged(QString errorString);
+    void readyChanged(bool ready);
 };
 
 #endif // MACHINETALKSUBSCRIBER_H

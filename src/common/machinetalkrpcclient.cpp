@@ -1,14 +1,15 @@
-#include "machinetalkclient.h"
+#include "machinetalkrpcclient.h"
 #include "debughelper.h"
 
 /** Generic Machinetalk RPC client implementation */
-MachinetalkClient::MachinetalkClient(QObject *parent) :
+MachinetalkRpcClient::MachinetalkRpcClient(QObject *parent) :
     QObject(parent),
+    m_ready(false),
     m_uri(""),
     m_debugName(""),
     m_context(NULL),
     m_socket(NULL),
-    m_socketState(Down),
+    m_socketState(SocketDown),
     m_errorString(""),
     m_heartbeatTimer(new QTimer(this)),
     m_heartbeatPeriod(3000),
@@ -21,13 +22,13 @@ MachinetalkClient::MachinetalkClient(QObject *parent) :
             this, SLOT(heartbeatTimerTick()));
 }
 
-MachinetalkClient::~MachinetalkClient()
+MachinetalkRpcClient::~MachinetalkRpcClient()
 {
     stop();
 }
 
 /** Connects the 0MQ sockets */
-bool MachinetalkClient::connectSockets()
+bool MachinetalkRpcClient::connectSockets()
 {
     m_context = new PollingZMQContext(this, 1);
     connect(m_context, SIGNAL(pollError(int,QString)),
@@ -44,7 +45,7 @@ bool MachinetalkClient::connectSockets()
     catch (const zmq::error_t &e) {
         QString errorString;
         errorString = QString("Error %1: ").arg(e.num()) + QString(e.what());
-        updateState(Error, errorString);
+        updateState(SocketError, errorString);
         return false;
     }
 
@@ -59,9 +60,9 @@ bool MachinetalkClient::connectSockets()
 }
 
 /** Disconnects the 0MQ sockets */
-void MachinetalkClient::disconnectSockets()
+void MachinetalkRpcClient::disconnectSockets()
 {
-    updateState(Down);
+    updateState(SocketDown);
 
     if (m_socket != NULL)
     {
@@ -78,13 +79,13 @@ void MachinetalkClient::disconnectSockets()
     }
 }
 
-void MachinetalkClient::start()
+void MachinetalkRpcClient::start()
 {
 #ifdef QT_DEBUG
    DEBUG_TAG(1, m_debugName, "start");
 #endif
 
-    updateState(Trying);
+    updateState(SocketTrying);
 
     if (connectSockets())
     {
@@ -94,7 +95,7 @@ void MachinetalkClient::start()
     }
 }
 
-void MachinetalkClient::stop()
+void MachinetalkRpcClient::stop()
 {
 #ifdef QT_DEBUG
     DEBUG_TAG(1, m_debugName, "stop");
@@ -104,7 +105,7 @@ void MachinetalkClient::stop()
     disconnectSockets();
 }
 
-void MachinetalkClient::refreshHeartbeat()
+void MachinetalkRpcClient::refreshHeartbeat()
 {
     if (m_heartbeatTimer->isActive())
     {
@@ -118,17 +119,17 @@ void MachinetalkClient::refreshHeartbeat()
     }
 }
 
-void MachinetalkClient::stopHeartbeat()
+void MachinetalkRpcClient::stopHeartbeat()
 {
     m_heartbeatTimer->stop();
 }
 
-void MachinetalkClient::updateState(MachinetalkClient::SocketState state)
+void MachinetalkRpcClient::updateState(SocketState state)
 {
     updateState(state, "");
 }
 
-void MachinetalkClient::updateState(MachinetalkClient::SocketState state, QString errorString)
+void MachinetalkRpcClient::updateState(SocketState state, QString errorString)
 {
     if (state != m_socketState) {
         m_socketState = state;
@@ -142,29 +143,29 @@ void MachinetalkClient::updateState(MachinetalkClient::SocketState state, QStrin
 
 #ifdef QT_DEBUG
     QMap<SocketState, QString> states;
-    states.insert(Down, "DOWN");
-    states.insert(Trying, "TRYING");
-    states.insert(Up, "UP");
-    states.insert(Timeout, "TIMEOUT");
-    states.insert(Error, "ERROR");
+    states.insert(SocketDown, "DOWN");
+    states.insert(SocketTrying, "TRYING");
+    states.insert(SocketUp, "UP");
+    states.insert(SocketTimeout, "TIMEOUT");
+    states.insert(SocketError, "ERROR");
     DEBUG_TAG(1, m_debugName, states.value(m_socketState));
 #endif
     }
 }
 
-void MachinetalkClient::heartbeatTimerTick()
+void MachinetalkRpcClient::heartbeatTimerTick()
 {
     sendMessage(pb::MT_PING, &m_tx);
     m_pingErrorCount += 1;
 
-    if ((m_pingErrorCount > m_pingErrorThreshold) && (m_socketState == Up))
+    if ((m_pingErrorCount > m_pingErrorThreshold) && (m_socketState == SocketUp))
     {
-        updateState(Timeout);
+        updateState(SocketTimeout);
     }
 }
 
 /** Processes all message received on the 0MQ socket */
-void MachinetalkClient::socketMessageReceived(QList<QByteArray> messageList)
+void MachinetalkRpcClient::socketMessageReceived(QList<QByteArray> messageList)
 {
     m_rx.ParseFromArray(messageList.at(0).data(), messageList.at(0).size());
 
@@ -175,7 +176,7 @@ void MachinetalkClient::socketMessageReceived(QList<QByteArray> messageList)
 #endif
 
     m_pingErrorCount = 0;  // any message counts as heartbeat since messages can be queued
-    updateState(Up);
+    updateState(SocketUp);
 
     if (m_rx.type() != pb::MT_PING_ACKNOWLEDGE)  // ping acknowlege is uninteresting
     {
@@ -183,7 +184,7 @@ void MachinetalkClient::socketMessageReceived(QList<QByteArray> messageList)
     }
 }
 
-void MachinetalkClient::sendMessage(pb::ContainerType type, pb::Container *tx)
+void MachinetalkRpcClient::sendMessage(pb::ContainerType type, pb::Container *tx)
 {
     if (m_socket == NULL) {  // disallow sending messages when not connected
         return;
@@ -197,7 +198,7 @@ void MachinetalkClient::sendMessage(pb::ContainerType type, pb::Container *tx)
     catch (const zmq::error_t &e) {
         QString errorString;
         errorString = QString("Error %1: ").arg(e.num()) + QString(e.what());
-        updateState(Error, errorString);
+        updateState(SocketError, errorString);
     }
 
     if (type == pb::MT_PING)
@@ -206,9 +207,9 @@ void MachinetalkClient::sendMessage(pb::ContainerType type, pb::Container *tx)
     }
 }
 
-void MachinetalkClient::pollError(int errorNum, const QString &errorMsg)
+void MachinetalkRpcClient::pollError(int errorNum, const QString &errorMsg)
 {
     QString errorString;
     errorString = QString("Error %1: ").arg(errorNum) + errorMsg;
-    updateState(Error, errorString);
+    updateState(SocketError, errorString);
 }
