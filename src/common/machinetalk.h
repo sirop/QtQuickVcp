@@ -1,0 +1,5 @@
+#ifndef MACHINETALK_H
+#define MACHINETALK_H
+
+#endif // MACHINETALK_H
+
