@@ -27,10 +27,12 @@
 #include <QHash>
 #include <QTimer>
 #include <QUuid>
-#include "qhalpin.h"
 #include <nzmqt/nzmqt.hpp>
 #include <machinetalk/protobuf/message.pb.h>
 #include <google/protobuf/text_format.h>
+#include "qhalpin.h"
+#include "machinetalkrpcclient.h"
+#include "machinetalksubscriber.h"
 
 #if defined(Q_OS_IOS)
 namespace gpb = google_public::protobuf;
@@ -61,12 +63,6 @@ class QHalRemoteComponent : public AbstractServiceImplementation
 public:
     explicit QHalRemoteComponent(QObject *parent = 0);
 
-    enum SocketState {
-        Down = 1,
-        Trying = 2,
-        Up = 3
-    };
-
     enum State {
         Disconnected = 0,
         Connecting = 1,
@@ -85,12 +81,12 @@ public:
 
     QString halrcmdUri() const
     {
-        return m_halrcmdUri;
+        return m_rpcClient->uri();
     }
 
     QString halrcompUri() const
     {
-        return m_halrcompUri;
+        return m_subscriber->uri();
     }
 
     QString name() const
@@ -100,7 +96,7 @@ public:
 
     int heartbeatPeriod() const
     {
-        return m_heartbeatPeriod;
+        return m_rpcClient->heartbeatPeriod();
     }
 
     QObject *containerItem() const
@@ -138,18 +134,12 @@ public slots:
 
     void setHalrcmdUri(QString arg)
     {
-        if (m_halrcmdUri != arg) {
-            m_halrcmdUri = arg;
-            emit halrcmdUriChanged(arg);
-        }
+        m_rpcClient->setUri(arg);
     }
 
     void setHalrcompUri(QString arg)
     {
-        if (m_halrcompUri != arg) {
-            m_halrcompUri = arg;
-            emit halrcompUriChanged(arg);
-        }
+        m_subscriber->setUri(arg);
     }
 
     void setName(QString arg)
@@ -165,10 +155,7 @@ public slots:
 
     void heartbeatPeriod(int arg)
     {
-        if (m_heartbeatPeriod != arg) {
-            m_heartbeatPeriod = arg;
-            emit heartbeatPeriodChanged(arg);
-        }
+        m_rpcClient->setHeartbeatPeriod(arg);
     }
 
     void setContainerItem(QObject *arg)
@@ -189,28 +176,17 @@ public slots:
     }
 
 private:
-    QString     m_halrcmdUri;
-    QString     m_halrcompUri;
     QString     m_name;
-    int         m_heartbeatPeriod;
     bool        m_connected;
-    SocketState m_halrcompSocketState;
-    SocketState m_halrcmdSocketState;
     State       m_connectionState;
     ConnectionError       m_error;
     QString     m_errorString;
     QObject     *m_containerItem;
     bool        m_create;
 
-    PollingZMQContext *m_context;
-    ZMQSocket  *m_halrcompSocket;
-    ZMQSocket  *m_halrcmdSocket;
-    QTimer     *m_halrcmdHeartbeatTimer;
-    QTimer     *m_halrcompHeartbeatTimer;
-    bool        m_halrcmdPingOutstanding;
-    QUuid       m_uuid;
+    MachinetalkRpcClient  *m_rpcClient;
+    MachinetalkSubscriber *m_subscriber;
     // more efficient to reuse a protobuf Message
-    pb::Container   m_rx;
     pb::Container   m_tx;
     QMap<QString, QHalPin*> m_pinsByName;
     QHash<int, QHalPin*>    m_pinsByHandle;
@@ -220,33 +196,23 @@ private:
     void start();
     void stop();
     void cleanup();
-    void startHalrcmdHeartbeat();
-    void stopHalrcmdHeartbeat();
-    void startHalrcompHeartbeat(int interval);
-    void stopHalrcompHeartbeat();
-    void refreshHalrcompHeartbeat();
     void updateState(State state);
     void updateState(State state, ConnectionError error, QString errorString);
     void updateError(ConnectionError error, QString errorString);
-    void sendHalrcmdMessage(pb::ContainerType type);
 
 private slots:
     void pinUpdate(const pb::Pin &remotePin, QHalPin *localPin);
 
-    void halrcompMessageReceived(QList<QByteArray> messageList);
-    void halrcmdMessageReceived(QList<QByteArray> messageList);
-    void pollError(int errorNum, const QString& errorMsg);
-    void halrcmdHeartbeatTimerTick();
-    void halrcompHeartbeatTimerTick();
+    void halrcompMessageReceived(QByteArray topic, pb::Container *rx);
+    void halrcmdMessageReceived(pb::Container *rx);
+    void socketStateChanged(SocketState state);
+    void halrcmdStateChanged(SocketState state);
+    void halrcompStateChanged(SocketState state);
 
     void addPins();
     void removePins();
     void unsyncPins();
-    bool connectSockets();
-    void disconnectSockets();
     void bind();
-    void subscribe();
-    void unsubscribe();
 
 signals:
     void halrcmdUriChanged(QString arg);
