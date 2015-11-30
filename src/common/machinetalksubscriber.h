@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QSet>
 #include <nzmqt/nzmqt.hpp>
-#include "message.pb.h"
+#include <machinetalk/protobuf/message.pb.h>
 #include <google/protobuf/text_format.h>
 
 
